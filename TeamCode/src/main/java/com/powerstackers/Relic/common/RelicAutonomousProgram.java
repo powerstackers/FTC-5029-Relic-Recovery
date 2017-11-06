@@ -18,7 +18,7 @@
  *
  */
 
-package com.powerstackers.velocity.common;
+package com.powerstackers.Relic.common;
 
 import com.powerstackers.velocity.common.enums.PublicEnums.MotorSetting;
 import com.powerstackers.velocity.common.enums.PublicEnums.AllianceColor;

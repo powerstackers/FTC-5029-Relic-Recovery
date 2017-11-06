@@ -18,25 +18,12 @@
  *
  */
 
-package com.powerstackers.velocity.opmodes.teleop;
+package com.powerstackers.Relic.opmodes.teleop;
 
-import android.app.Activity;
-import android.graphics.Color;
-import android.view.View;
-
-import com.powerstackers.velocity.common.VelRobot;
-import com.powerstackers.velocity.common.VelRobotConstants;
-import com.powerstackers.velocity.common.enums.PublicEnums;
-import com.powerstackers.velocity.common.enums.PublicEnums.MotorSetting;
+import com.powerstackers.Relic.common.RelicRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.teamcode.R;
-
-import static com.powerstackers.velocity.common.VelRobotConstants.MINIMUM_JOYSTICK_THRESHOLD;
 
 /**
  * @author Derek Helm

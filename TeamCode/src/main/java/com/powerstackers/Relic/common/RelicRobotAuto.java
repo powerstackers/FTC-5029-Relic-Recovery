@@ -18,26 +18,24 @@
  *
  */
 
-package com.powerstackers.velocity.common;
+package com.powerstackers.Relic.common;
 
+import com.powerstackers.velocity.common.MiniPID;
+import com.powerstackers.velocity.common.VelRobotConstants;
 import com.powerstackers.velocity.common.enums.PublicEnums;
 import com.powerstackers.velocity.common.enums.StartingPosition;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.util.ThreadPool;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
@@ -80,7 +78,7 @@ import static java.lang.Thread.sleep;
  * @author Cate Thomas
  */
 @SuppressWarnings("unused")
-public class VelRobotAuto {
+public class RelicRobotAuto {
 
     protected final LinearOpMode mode;
     /*
@@ -97,30 +95,9 @@ public class VelRobotAuto {
     DcMotor motorDrive3;
     DcMotor motorDrive4;
 
-    private DcMotor motorPickup = null;
-    private DcMotor motorShooter1;
-    private DcMotor motorRLift;
-    private DcMotor motorLLift;
-
-    Servo servoBeaconRight = null;
-    Servo servoBeaconLeft = null;
-    public Servo servoBallGrab = null;
-    public Servo servoShoot = null;
-    public double matColorVal = 0;
-    public double matColorValBack = 0;
-
     public int startDirection = 0;
 
-    ModernRoboticsI2cGyro sensorGyro;
-    public ColorSensor sensorColor;
-    public UltrasonicSensor rightBeaconUS = null;
-    public UltrasonicSensor leftBeaconUS = null;
-    public OpticalDistanceSensor groundODS = null;
-    public OpticalDistanceSensor groundODSBack = null;
-    public ColorSensor sensorColorGroundL;
-    public ColorSensor sensorColorGroundR;
     public PublicEnums.Direction robotDirection = PublicEnums.Direction.N;
-    public MiniPID shooterPID = new MiniPID(0.03, 0, 0.01);
 
     private final ElapsedTime timer = new ElapsedTime();
 
@@ -129,7 +106,7 @@ public class VelRobotAuto {
      *
      * @param mode The OpMode in which the robot is being used.
      */
-    public VelRobotAuto(LinearOpMode mode) {
+    public RelicRobotAuto(LinearOpMode mode) {
         this.mode = mode;
     }
 
@@ -151,21 +128,6 @@ public class VelRobotAuto {
         //motorDrive3.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorDrive4 = mode.hardwareMap.dcMotor.get("motorBackRight");
 //        motorDrive4.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motorRLift = mode.hardwareMap.dcMotor.get("motorRightLift");
-        motorRLift.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorLLift = mode.hardwareMap.dcMotor.get("motorLeftLift");
-        motorPickup = mode.hardwareMap.dcMotor.get("motorBallPickup");
-
-        motorShooter1 = mode.hardwareMap.dcMotor.get("motorShooter");
-        motorShooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        motorShooter1.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorShooter1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        servoBallGrab = mode.hardwareMap.servo.get("servoBallGrab");
-        servoBeaconRight = mode.hardwareMap.servo.get("servoBeaconRight");
-        servoBeaconLeft = mode.hardwareMap.servo.get("servoBeaconLeft");
-        sensorGyro = (ModernRoboticsI2cGyro) mode.hardwareMap.gyroSensor.get("sensorGyro");
-        servoShoot = mode.hardwareMap.servo.get("servoShoot");
 
 //        mode.telemetry.addData("Gyro: ", "Gyro Calibration Started");
 //        mode.telemetry.update();
@@ -180,79 +142,10 @@ public class VelRobotAuto {
 //        }
 //        mode.telemetry.addData("Gyro: ", "Gyro Calibration Finished");
 //        mode.telemetry.update();
-        mode.telemetry.addData(">", "Gyro Calibrating. Do Not move!");
-        mode.telemetry.update();
-        sensorGyro.calibrate();
 
-        // make sure the gyro is calibrated.
-        while (!mode.isStopRequested() && sensorGyro.isCalibrating()) {
-            sleep(50);
-            mode.idle();
-        }
-
-
-        mode.telemetry.addData(">", "Gyro Calibrated.  Press Start.");
-        mode.telemetry.update();
-        servoBallGrab.setPosition(0.5);
-        sensorColor = mode.hardwareMap.colorSensor.get("sensorColor");
-        sensorColorGroundL = mode.hardwareMap.colorSensor.get("sensorColorGroundL");
-        sensorColorGroundR = mode.hardwareMap.colorSensor.get("sensorColorGroundR");
-        shooterPID.setOutputLimits(0.0, 1.0);
-
-        sensorColor.setI2cAddress(I2cAddr.create7bit(0x1e)); //8bit 0x3c
-        sensorColorGroundL.setI2cAddress(I2cAddr.create7bit(0x2e)); //8bit 0x5c
-        sensorColorGroundR.setI2cAddress(I2cAddr.create7bit(0x26)); //8bit 0x4c
-        groundODS = mode.hardwareMap.opticalDistanceSensor.get("ODS");
-        groundODSBack = mode.hardwareMap.opticalDistanceSensor.get("ODSB");
-
-        rightBeaconUS = mode.hardwareMap.ultrasonicSensor.get("RUS");
-        leftBeaconUS = mode.hardwareMap.ultrasonicSensor.get("LUS");
-        sensorColor.enableLed(false);
-        sensorColorGroundL.enableLed(true);
-        sensorColorGroundR.enableLed(true);
-//        motorShooter1.setMaxSpeed((int) (VelRobotConstants.MOTOR_SHOOTER_MAX_RPM * 0.74));
         stopMovement();
-        matColorVal = groundODS.getLightDetected();
-        matColorValBack = groundODSBack.getLightDetected();
-        servoShoot.setPosition(VelRobotConstants.SHOOT_SERVO_CLOSED);
-        beaconServoReset();
-        //servoBallGrab.setPosition(VelRobotConstants.SERVO_BALL_GRAB_STOWED);
         mode.telemetry.addData("Status: ", "Initialized");
         mode.telemetry.update();
-    }
-
-    /**
-     * Get the revolutions per minute of the shooter motor. Eats up 100ms!
-     *
-     * @return Double representing the rpm.
-     */
-
-    public boolean isShooterRunning() {
-        if (motorShooter1.getPower() > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public void beaconServoReset() {
-        servoBeaconRight.setPosition(VelRobotConstants.BEACON_RIGHT_BACK);
-        servoBeaconLeft.setPosition(VelRobotConstants.BEACON_LEFT_BACK);
-    }
-
-    public double getShooterRPM() {
-
-        int endEncoder;
-        int startEncoder = motorShooter1.getCurrentPosition();
-        timer.reset();
-
-        //noinspection StatementWithEmptyBody
-        while (timer.milliseconds() < 100) {
-        }
-
-        endEncoder = motorShooter1.getCurrentPosition();
-
-        return (endEncoder - startEncoder) * (600.0 / 44.4);
     }
 
     public void directionChange(PublicEnums.Direction direction) {
@@ -301,100 +194,6 @@ public class VelRobotAuto {
         }
         mode.telemetry.update();
     }
-
-    /**
-     * Set the shooter motors.
-     *
-     * @param setting MotorSetting enum telling what setting to use.
-     */
-    public void setShooter(PublicEnums.MotorSetting setting) {
-        switch (setting) {
-            case FORWARD:
-                double outputSpeed = shooterPID.getOutput(getShooterRPM(), VelRobotConstants.MOTOR_SHOOTER_TARGET_RPM);
-                motorShooter1.setPower(outputSpeed);
-                break;
-            case STOP:
-                motorShooter1.setPower(0.0);
-                break;
-            default:
-                motorShooter1.setPower(0.0);
-                break;
-        }
-    }
-
-    /**
-     * Set the RPM of the shooter motor. Sets the speed as\ a percentage of the maximum RPM.
-     * @param rpm RPM of motor that we want to set, can be positive or negative.
-     */
-//    private void setShooterRpm(int rpm) {
-//        double shootRpm = getShooterRPM();
-//
-//        // Uses somehting called a Schmitt trigger. Has an upper and lower threshold. Should stop us
-//        // from bouncing around.
-//        // If RPM is below the lower threshold, add speed. If it is above the upper threshold,
-//        // subtract speed. If it is between the thresholds, do nothing. Remember, don't go outside
-//        // the limits of our motor values.
-//        if (shootRpm < rpm - VelRobotConstants.SCHMITT_LOWER
-//                && motorShooter1.getPower() != 1.0) {
-//            motorShooter1.setPower(motorShooter1.getPower() + 0.05);
-//        } else if (shootRpm > rpm + VelRobotConstants.SCHMITT_UPPER
-//                && motorShooter1.getPower() != 0.0) {
-//            motorShooter1.setPower(motorShooter1.getPower() - 0.05);
-//        }
-//    }
-
-    /**
-     * Set the RPM of the shooter motor. Sets the speed as a percentage of the maximum RPM.
-     *
-     * @param rpm RPM of motor that we want to set, can be positive or negative.
-     */
-    private void setShooterRpm(int rpm) throws InterruptedException {
-        //motorShooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        if (Math.abs(rpm) <= VelRobotConstants.MOTOR_SHOOTER_MAX_RPM) {
-            motorShooter1.setPower((double) rpm / VelRobotConstants.MOTOR_SHOOTER_MAX_RPM);
-        } else {
-            motorShooter1.setPower(rpm > 0 ? 1.0 : -1.0);
-        }
-
-//        if (getShooterRPM() > 650){
-//        motorShooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//
-//        if (Math.abs(rpm) <= VelRobotConstants.MOTOR_SHOOTER_MAX_RPM) {
-//            motorShooter1.setPower((double) rpm / VelRobotConstants.MOTOR_SHOOTER_MAX_RPM);
-//        } else {
-//            motorShooter1.setPower(rpm > 0 ? 1.0 : -1.0);
-//        }}
-    }
-
-    /**
-     * Set the lift motor.
-     *
-     * @param setting MotorSetting telling which setting to use.
-     */
-    public void setLift(PublicEnums.MotorSetting setting) {
-        switch (setting) {
-            case FORWARD:
-                motorLLift.setPower(VelRobotConstants.MOTOR_LIFT_POWER);
-                motorRLift.setPower(VelRobotConstants.MOTOR_LIFT_POWER);
-                break;
-            case REVERSE:
-                motorLLift.setPower(-VelRobotConstants.MOTOR_LIFT_POWER);
-                motorRLift.setPower(-VelRobotConstants.MOTOR_LIFT_POWER);
-                break;
-            case STOP:
-                motorLLift.setPower(0.0);
-                motorRLift.setPower(0.0);
-                break;
-            default:
-                motorLLift.setPower(0.0);
-                motorRLift.setPower(0.0);
-                break;
-        }
-    }
-
-//    public void setBeaconTap(double position) {
-//        servoBeaconRight.setPosition(position);
-//    }
 
     /**
      * Set the movement speeds of all four motors, based on a desired angle, speed, and rotation
@@ -471,100 +270,6 @@ public class VelRobotAuto {
         stopMovement();
     }
 
-    public void driveToLine(double angle, double speed, PublicEnums.GyroCorrection gyroCorrection, PublicEnums.BeaconNumber beaconNumber, double scale) {
-
-        int x = 0;
-        double startGyroVal = sensorGyro.getHeading();
-        double GyroVal;
-        setMovement(angle, speed, 0, scale);
-        while ((isThereMat()||isThereMatBack()) && mode.opModeIsActive() && x == 0) {
-            GyroVal = sensorGyro.getHeading();
-            if (gyroCorrection == PublicEnums.GyroCorrection.YES) {
-                setMovement(angle, speed, (sensorGyro.getIntegratedZValue() + startGyroVal)/100, 1);
-            }
-            mode.telemetry.addData("Gyro Heading", GyroVal);
-            mode.telemetry.addData("Is there Mat", isThereMat());
-            mode.telemetry.addData("Mat Val:", matColorVal);
-            mode.telemetry.addData("ODS Front Val: ", getGroundLight());
-            mode.telemetry.addData("ODS Back Val: ", getGroundLight());
-            mode.telemetry.update();
-            if (beaconNumber == PublicEnums.BeaconNumber.ONE && (rightBeaconUS.getUltrasonicLevel() <= 7 || leftBeaconUS.getUltrasonicLevel() <= 7)) {
-                x++;
-            }
-        }
-        if (x == 1) {
-            while (isThereMat() && mode.opModeIsActive()) {
-                setMovement(VelRobotConstants.DIRECTION_NORTH, speed - 0.1, 0, 1);
-                mode.telemetry.addData("Is there Mat", isThereMat());
-                mode.telemetry.addData("Mat Light", getGroundLight());
-                mode.telemetry.update();
-            }
-        }
-        stopMovement();
-    }
-
-    public double degToRad(double degrees) {
-        return ((degrees / 180) * PI);
-    }
-
-    public void driveWithUS(double angle, double speed, double target) {
-        double startGyroVal = sensorGyro.getHeading();
-// any errors with misalignment will get fixed when the robot squares on the wall
-        while ((getLeftUS() >= target && getRightUS() >= target) && mode.opModeIsActive()) {
-            if (getLeftUS()<30 &&getRightUS()<30){
-                if (getLeftUS() < getRightUS()) {
-                    setMovement(angle, speed, -0.2, 1);
-
-                } else if (getLeftUS() > getRightUS()) {
-                    setMovement(angle, speed, 0.2, 1);
-
-                } else {
-                    setMovement(angle, speed, 0, 1);
-
-                }
-            }else{
-                setMovement(angle, speed, (sensorGyro.getIntegratedZValue() + startGyroVal)/100, 1);
-
-            }
-            mode.telemetry.addData("Robot Heading", sensorGyro.getHeading());
-            mode.telemetry.update();
-        }
-
-        stopMovement();
-    }
-
-    public double getRightUS() {
-        return rightBeaconUS.getUltrasonicLevel();
-    }
-
-    public double getLeftUS() {
-        return leftBeaconUS.getUltrasonicLevel();
-    }
-
-    public double getGroundLight() {
-        return groundODS.getLightDetected();
-    }
-    public double getGroundLightBack() {
-        return groundODS.getLightDetected();
-    }
-
-    public boolean isThereMat() {
-
-        if (getGroundLight() - .3 <= matColorVal) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    public boolean isThereMatBack() {
-
-        if (getGroundLightBack() - .3 <= matColorVal) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     /**
      * Completely stop the drive motors.
      */
@@ -583,11 +288,6 @@ public class VelRobotAuto {
         motorDrive2.setPower(0.0);
         motorDrive3.setPower(0.0);
         motorDrive4.setPower(0.0);
-
-        motorShooter1.setPower(0.0);
-        motorPickup.setPower(0.0);
-        motorLLift.setPower(0.0);
-        motorRLift.setPower(0.0);
     }
 
     /**
@@ -654,13 +354,6 @@ public class VelRobotAuto {
     /**
      * @return Int representation of the motor position.
      */
-    public int getShooterEncVal() {
-        return motorShooter1.getCurrentPosition();
-    }
-
-    public double getShooterPower() {
-        return motorShooter1.getPower();
-    }
 
     public long getDrive1Encoder() {
         return motorDrive1.getCurrentPosition();
@@ -677,34 +370,6 @@ public class VelRobotAuto {
     public long getDrive4Encoder() {
         return motorDrive4.getCurrentPosition();
     }
-
-    public int getEncoderShooter() throws InterruptedException {
-        return motorShooter1.getCurrentPosition();
-    }
-
-
-//    public int getARGB() {
-//        return sensorColor.argb();
-//    }
-//
-//    public int getRed() {
-//        return sensorColor.red();
-//    }
-//
-//    public int getBlue() {
-//        return sensorColor.blue();
-//    }
-//
-//    public int getGreen() {
-//        return sensorColor.green();
-//    }
-//
-//    public int getAlpha() {
-//        return sensorColor.alpha();
-//    }
-
-    // TODO Automatic ball feeder method
-
 
     /**
      * Reduction on motor gearbox.
@@ -779,50 +444,6 @@ public class VelRobotAuto {
         motorDrive4.setPower(power);
     }
 
-    public void beaconTap(PublicEnums.AllianceColor allianceColor) throws InterruptedException {
-        sensorColor.enableLed(false);
-
-        int x = 0;
-        if (allianceColor == PublicEnums.AllianceColor.RED) {
-            while (mode.opModeIsActive() && x < 1) {
-                mode.telemetry.addData("Sensor Beacon Color Red: " ,sensorColor.red());
-                mode.telemetry.addData("Sensor Beacon Color Blue: " ,sensorColor.blue());
-                if (sensorColor.red() > sensorColor.blue()) {
-                    servoBeaconLeft.setPosition(VelRobotConstants.BEACON_LEFT_FORWARD);
-                    sleep(1000);
-                    x++;
-
-                } else if (sensorColor.blue() > sensorColor.red()) {
-                    servoBeaconRight.setPosition(VelRobotConstants.BEACON_RIGHT_FORWARD);
-                    sleep(1000);
-                    x++;
-                } else {
-                    beaconServoReset();
-                }
-            }
-        } else if (allianceColor == PublicEnums.AllianceColor.BLUE) {
-            while (mode.opModeIsActive() && x < 1) {
-                mode.telemetry.addData("Sensor Beacon Color Red: " ,sensorColor.red());
-                mode.telemetry.addData("Sensor Beacon Color Blue: " ,sensorColor.blue());
-                mode.telemetry.update();
-                if (sensorColor.red() < sensorColor.blue()) {
-                    servoBeaconLeft.setPosition(VelRobotConstants.BEACON_LEFT_FORWARD);
-                    sleep(1000);
-                    x++;
-
-                } else if (sensorColor.blue() < sensorColor.red()) {
-                    servoBeaconRight.setPosition(VelRobotConstants.BEACON_RIGHT_FORWARD);
-                    sleep(1000);
-                    x++;
-                } else {
-                    beaconServoReset();
-                }
-            }
-        }
-        beaconServoReset();
-        sleep(1000);
-    }
-
     /**
      * Set the power of the left hand side drive motors.
      *
@@ -850,32 +471,32 @@ public class VelRobotAuto {
      * @param speed   Speed at which to turn.
      * @throws InterruptedException Make sure that we don't get trapped in this method when interrupted.
      */
-    void turnDegrees(double degrees, double speed) throws InterruptedException {
-
-        double degreesSoFar = getGyroHeading();
-
-        if (degrees > 180) {
-//            robot.setPowerLeft(-1 * speed);
-//            robot.setPowerRight(speed);
-            mode.telemetry.addData("gyro1", getGyroHeading());
-        } else if (degrees < 180 || degrees == 180) {
-//            robot.setPowerLeft(speed);
-//            robot.setPowerRight(-1 * speed);
-            mode.telemetry.addData("gyro2", getGyroHeading());
-        } else {
-            this.setPowerAll(0);
-        }
-        mode.telemetry.addData("Gyro", degrees + "," + degreesSoFar);
-        // For as long as the current degree measure doesn't equal the target. This will work in the clockwise and
-        // counterclockwise directions, since we are comparing the absolute values
-        while ((degreesSoFar) != (degrees)) {
-            degreesSoFar = getGyroHeading();
-            mode.telemetry.addData("gyrocompare", degreesSoFar);
-        }
-
-        // Stop all drive motors
-//        robot.setPowerAll(0);
-    }
+//    void turnDegrees(double degrees, double speed) throws InterruptedException {
+//
+//        double degreesSoFar = getGyroHeading();
+//
+//        if (degrees > 180) {
+////            robot.setPowerLeft(-1 * speed);
+////            robot.setPowerRight(speed);
+//            mode.telemetry.addData("gyro1", getGyroHeading());
+//        } else if (degrees < 180 || degrees == 180) {
+////            robot.setPowerLeft(speed);
+////            robot.setPowerRight(-1 * speed);
+//            mode.telemetry.addData("gyro2", getGyroHeading());
+//        } else {
+//            this.setPowerAll(0);
+//        }
+//        mode.telemetry.addData("Gyro", degrees + "," + degreesSoFar);
+//        // For as long as the current degree measure doesn't equal the target. This will work in the clockwise and
+//        // counterclockwise directions, since we are comparing the absolute values
+//        while ((degreesSoFar) != (degrees)) {
+//            degreesSoFar = getGyroHeading();
+//            mode.telemetry.addData("gyrocompare", degreesSoFar);
+//        }
+//
+//        // Stop all drive motors
+////        robot.setPowerAll(0);
+//    }
 
     /**
      * Turn the robot a certain number of degrees.
@@ -885,58 +506,58 @@ public class VelRobotAuto {
      * @param degrees The distance in degrees to turn.
      * @param speed   The speed at which to turn.
      */
-    public void turnDegreesRight(double degrees, double speed) throws InterruptedException {
-        motorDrive1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        double degreesSoFar = this.getGyroHeading();
-        double degreesToGo;
-        double degreesFixed;
+//    public void turnDegreesRight(double degrees, double speed) throws InterruptedException {
+//        motorDrive1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        double degreesSoFar = this.getGyroHeading();
+//        double degreesToGo;
+//        double degreesFixed;
+//
+//        degreesToGo = (degreesSoFar + degrees);
+//
+//        if (degreesToGo < 360) {                //right
+//            this.setPowerLeft(speed);
+//            this.setPowerRight(-1 * speed);
+//            while ((degreesSoFar) != (degrees) && mode.opModeIsActive()) {
+//                degreesSoFar = this.getGyroHeading();
+//                mode.telemetry.addData("gyrocompare", degreesSoFar);
+//                mode.telemetry.update();
+//            }
+//        } else if (degreesToGo > 360) {
+//            degreesFixed = degreesToGo - 360;
+//            this.setPowerLeft(speed);
+//            this.setPowerRight(-1 * speed);
+//            while ((degreesSoFar) < (degreesFixed) && mode.opModeIsActive()) {
+//                mode.telemetry.addData("gyrocompare", degreesSoFar = this.getGyroHeading());
+//            }
+//        } else {
+//            this.setPowerAll(0);
+//        }
+//    }
 
-        degreesToGo = (degreesSoFar + degrees);
-
-        if (degreesToGo < 360) {                //right
-            this.setPowerLeft(speed);
-            this.setPowerRight(-1 * speed);
-            while ((degreesSoFar) != (degrees) && mode.opModeIsActive()) {
-                degreesSoFar = this.getGyroHeading();
-                mode.telemetry.addData("gyrocompare", degreesSoFar);
-                mode.telemetry.update();
-            }
-        } else if (degreesToGo > 360) {
-            degreesFixed = degreesToGo - 360;
-            this.setPowerLeft(speed);
-            this.setPowerRight(-1 * speed);
-            while ((degreesSoFar) < (degreesFixed) && mode.opModeIsActive()) {
-                mode.telemetry.addData("gyrocompare", degreesSoFar = this.getGyroHeading());
-            }
-        } else {
-            this.setPowerAll(0);
-        }
-    }
-
-    public void turnDegreesLeft(double degrees, double speed) throws InterruptedException {
-        double degreesSoFar = this.getGyroHeading();
-        double degreesToGo;
-        double degreesFixed;
-
-        degreesToGo = (degreesSoFar - degrees);
-
-        if (degreesToGo > 0) {                //left
-            this.setPowerLeft(-1 * speed);
-            this.setPowerRight(speed);
-            while ((degreesSoFar) > (degrees) && mode.opModeIsActive()) {
-                mode.telemetry.addData("gyrocompare", degreesSoFar = this.getGyroHeading());
-            }
-        } else if (degreesToGo < 0) {
-            degreesFixed = 360 - degreesToGo;
-            this.setPowerLeft(-1 * speed);
-            this.setPowerRight(speed);
-            while ((degreesSoFar) > (degreesFixed) && mode.opModeIsActive()) {
-                mode.telemetry.addData("gyrocompare", degreesSoFar = this.getGyroHeading());
-            }
-        } else {
-            this.setPowerAll(0);
-        }
-    }
+//    public void turnDegreesLeft(double degrees, double speed) throws InterruptedException {
+//        double degreesSoFar = this.getGyroHeading();
+//        double degreesToGo;
+//        double degreesFixed;
+//
+//        degreesToGo = (degreesSoFar - degrees);
+//
+//        if (degreesToGo > 0) {                //left
+//            this.setPowerLeft(-1 * speed);
+//            this.setPowerRight(speed);
+//            while ((degreesSoFar) > (degrees) && mode.opModeIsActive()) {
+//                mode.telemetry.addData("gyrocompare", degreesSoFar = this.getGyroHeading());
+//            }
+//        } else if (degreesToGo < 0) {
+//            degreesFixed = 360 - degreesToGo;
+//            this.setPowerLeft(-1 * speed);
+//            this.setPowerRight(speed);
+//            while ((degreesSoFar) > (degreesFixed) && mode.opModeIsActive()) {
+//                mode.telemetry.addData("gyrocompare", degreesSoFar = this.getGyroHeading());
+//            }
+//        } else {
+//            this.setPowerAll(0);
+//        }
+//    }
 
     /**
      * Move the robot across the playing field a certain distance.
@@ -1117,30 +738,6 @@ public class VelRobotAuto {
 //    public long getRightEncoder() {
 //        return motorDrive3.getCurrentPosition();
 //    }
-
-    public double getGyroHeading() {
-        return sensorGyro.getHeading();
-    }
-
-    public void calibrateGyro() {
-        sensorGyro.calibrate();
-    }
-
-    public boolean isGyrocalibrate() {
-        return sensorGyro.isCalibrating();
-    }
-
-    public double getrawXGyro() {
-        return sensorGyro.rawX();
-    }
-
-    public double getrawYGyro() {
-        return sensorGyro.rawY();
-    }
-
-    public double getrawZGyro() {
-        return sensorGyro.rawZ();
-    }
 
     public OpMode getParentOpMode() {
         return mode;

@@ -18,29 +18,10 @@
  *
  */
 
-package com.powerstackers.velocity.common;
+package com.powerstackers.Relic.common;
 
-import com.powerstackers.velocity.common.enums.PublicEnums;
-import com.powerstackers.velocity.common.enums.PublicEnums.MotorSetting;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.GyroSensor;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-import com.qualcomm.robotcore.hardware.I2cAddr;
-
-import static java.lang.Math.PI;
-import static java.lang.Math.abs;
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
-import static java.lang.Math.sqrt;
 
 /**
  * Basic configurations for our robot. This class contains methods to make the robot do stuff.
@@ -94,7 +75,7 @@ public class RelicRobot {
     //public void displayDirection() {
         //mode.telemetry.addData("Robot Direction:", robotDirection);
         //mode.telemetry.update();
-    }
+//    }
 	
 	//Custom Methods VVV
 

@@ -20,7 +20,7 @@
 
 package com.powerstackers.velocity.opmodes.autonomous;
 
-import com.powerstackers.velocity.common.VelAutonomousProgram;
+import com.powerstackers.Relic.common.RelicAutonomousProgram;
 import com.powerstackers.velocity.common.enums.PublicEnums;
 import com.powerstackers.velocity.common.enums.StartingPosition;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;

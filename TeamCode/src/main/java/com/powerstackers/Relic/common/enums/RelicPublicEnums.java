@@ -18,13 +18,13 @@
  *
  */
 
-package com.powerstackers.velocity.common.enums;
+package com.powerstackers.Relic.common.enums;
 
 /**
  * Enumerations used to represent settings for hardware devices.
  * @author  Derek on 1/23/2016.
  */
-public class PublicEnums {
+public class RelicPublicEnums {
 
     /** Represents a motor which can have one of three settings: forward, stop, and reverse.  */
     public enum MotorSetting {
